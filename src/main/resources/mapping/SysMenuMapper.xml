@@ -17,6 +17,17 @@
  <select id="selectMenus" parameterType="com.example.bootdemo.model.SysMenu" resultMap="BaseResultMap">
    select <include refid="Base_Column_List" /> from t_sys_menu
   </select>
+  
+  <select id="findByUserId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+  	select tsm.* from t_sys_menu tsm 
+  	inner join (select tsrm.menu_id from t_sys_role_menu tsrm 
+	inner join t_sys_role tsr on tsr.role_id = tsrm.role_id
+	inner join t_sys_user_role tsur on tsur.role_id = tsr.role_id
+	inner join t_sys_user tsu on tsu.user_id = tsur.user_id
+	where tsu.user_id=#{userId,jdbcType=INTEGER} group by menu_id) t 
+	on t.menu_id = tsm.menu_id order by menu_rdx
+  </select>
+  
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />

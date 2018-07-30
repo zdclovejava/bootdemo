@@ -1,5 +1,7 @@
 package com.example.bootdemo.shiro;
 
+import java.util.List;
+
 import javax.annotation.Resource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -11,7 +13,9 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
 
+import com.example.bootdemo.model.SysMenu;
 import com.example.bootdemo.model.SysUser;
+import com.example.bootdemo.service.MenuService;
 import com.example.bootdemo.service.UserService;
 
 /**
@@ -34,6 +38,8 @@ public class MyShiroRealm extends AuthorizingRealm{
 
 	@Resource
 	private UserService userService;
+	@Resource
+	private MenuService menuService;
 	
 	
 	/**
@@ -46,8 +52,7 @@ public class MyShiroRealm extends AuthorizingRealm{
 	* （需要手动编程进行实现；放在service进行调用）
 	* 在权限修改后调用realm中的方法，realm已经由spring管理，所以从spring中获取realm实例，
 	* 调用clearCached方法；
-	* :Authorization 是授权访问控制，用于对用户进行的操作授权，证明该用户是否允许进行当前操作，如访问某个链
-	接，某个资源文件等。
+	* Authorization 是授权访问控制，用于对用户进行的操作授权，证明该用户是否允许进行当前操作，如访问某个链接，某个资源文件等。
 	* @param principals
 	* @return
 	*/
@@ -59,6 +64,7 @@ public class MyShiroRealm extends AuthorizingRealm{
 		* 当放到缓存中时，这样的话，doGetAuthorizationInfo就只会执行一次了，
 		* 缓存过期之后会再次执行。
 		*/
+		System.out.println("doGetAuthorizationInfo------------------------");
 		SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
 		SysUser sysUser = (SysUser)principals.getPrimaryPrincipal();
 		if(sysUser==null){
@@ -66,25 +72,10 @@ public class MyShiroRealm extends AuthorizingRealm{
 		}
 		//实际项目中，这里可以根据实际情况做缓存，如果不做，Shiro自己也是有时间间隔机制，2分钟内不会重复执行该方法
 		// UserInfo userInfo = userInfoService.findByUsername(username)
-		
-		//添加一个角色,不是配置意义上的添加,而是证明该用户拥有admin角色
-		//authorizationInfo.addRole("admin");
-		//添加权限
-		authorizationInfo.addStringPermission("userInfo:query");
-		
-		//用户的角色对应的所有权限，如果只使用角色定义访问权限，下面的四行可以不要
-		// List<Role> roleList=user.getRoleList();
-		// for (Role role : roleList) {
-		// info.addStringPermissions(role.getPermissionsName());
-		// }
-//		for(SysRole role:userInfo.getRoleList()){
-//			authorizationInfo.addRole(role.getRole());
-//			for(SysPermission p:role.getPermissions()){
-//				authorizationInfo.addStringPermission(p.getPermission());
-//			}
-//		}
-		//设置权限信息.
-		// authorizationInfo.setStringPermissions(getStringPermissions(userInfo.getRoleList()));
+		List<SysMenu> menuList = menuService.findMenuByUserId(sysUser.getUserId());
+		for(SysMenu p:menuList){
+			authorizationInfo.addStringPermission(p.getMenuUrl());
+		}
 		return authorizationInfo;
 	}
 
@@ -97,7 +88,8 @@ public class MyShiroRealm extends AuthorizingRealm{
 	*/
 	@Override
 	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-		//获取用户的输入的账号.
+		System.out.println("doGetAuthenticationInfo------------------------");
+		//获取用户的输入的账号
 		String loginName = (String)token.getPrincipal();
 		//实际项目中，这里可以根据实际情况做缓存，如果不做，Shiro自己也是有时间间隔机制，2分钟内不会重复执行该方法
 		SysUser userInfo = userService.findUserByLoginName(loginName);
@@ -106,17 +98,9 @@ public class MyShiroRealm extends AuthorizingRealm{
 		}
 		//userInfo.setPermissions(userService.findPermissions(user));
 		
-		//交给AuthenticatingRealm使用CredentialsMatcher进行密码匹配，如果觉得人家的不好可以自定义实现
-//		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(
-//			userInfo, //用户名
-//			userInfo.getLoginPwd(), //密码
-//			ByteSource.Util.bytes(userInfo.getPwdSalt()),//salt=username+salt
-//			getName() //realm name
-//		);
-		
-		//明文: 若存在，将此用户存放到登录认证info中，无需自己做密码对比，Shiro会为我们进行密码对比校验
+		//若存在，将此用户存放到登录认证info中，无需自己做密码对比，Shiro会为我们进行密码对比校验
 		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(userInfo,userInfo.getLoginPwd(),
-				ByteSource.Util.bytes(userInfo.getPwdSalt()),getName());
+				ByteSource.Util.bytes(userInfo.getPwdSalt()),userInfo.getLoginName());
 	    return authenticationInfo;
 	}
 

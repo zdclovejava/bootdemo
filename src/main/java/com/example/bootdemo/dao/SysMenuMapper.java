@@ -7,6 +7,8 @@ import java.util.List;
 public interface SysMenuMapper {
 
     int deleteByPrimaryKey(Integer menuId);
+    
+    List<SysMenu> findByUserId(Integer userId);
 
     int insert(SysMenu record);
 

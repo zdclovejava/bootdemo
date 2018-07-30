@@ -46,7 +46,7 @@ public class HelloCtrl {
 		return view;
 	}
 	
-	@RequiresPermissions("sys:logs:view")
+	@RequiresPermissions("user:all")
 	@RequestMapping("/all")
 	@ResponseBody
 	public Object findAllUser(@RequestParam(name = "pageNum", required = false, defaultValue = "1")
