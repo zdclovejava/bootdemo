@@ -1,8 +1,7 @@
 package com.example.bootdemo.shiro;
 
-import java.util.List;
-
 import javax.annotation.Resource;
+
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -71,9 +70,8 @@ public class MyShiroRealm extends AuthorizingRealm{
 			return null;
 		}
 		//实际项目中，这里可以根据实际情况做缓存，如果不做，Shiro自己也是有时间间隔机制，2分钟内不会重复执行该方法
-		// UserInfo userInfo = userInfoService.findByUsername(username)
-		List<SysMenu> menuList = menuService.findMenuByUserId(sysUser.getUserId());
-		for(SysMenu p:menuList){
+//		Set<SysMenu> menuList = menuService.findMenuByUserId(sysUser.getUserId());
+		for(SysMenu p:sysUser.getMenuSet()){
 			authorizationInfo.addStringPermission(p.getMenuUrl());
 		}
 		return authorizationInfo;
@@ -92,15 +90,15 @@ public class MyShiroRealm extends AuthorizingRealm{
 		//获取用户的输入的账号
 		String loginName = (String)token.getPrincipal();
 		//实际项目中，这里可以根据实际情况做缓存，如果不做，Shiro自己也是有时间间隔机制，2分钟内不会重复执行该方法
-		SysUser userInfo = userService.findUserByLoginName(loginName);
-		if(userInfo == null){
+		SysUser sysUser = userService.findUserByLoginName(loginName);
+		if(sysUser == null){
 			return null;
 		}
-		//userInfo.setPermissions(userService.findPermissions(user));
-		
+		//暂时先将用户的菜单集合放到这，后续改到doGetAuthorizationInfo方法中做缓存
+		sysUser.setMenuSet(menuService.findMenuByUserId(sysUser.getUserId()));
 		//若存在，将此用户存放到登录认证info中，无需自己做密码对比，Shiro会为我们进行密码对比校验
-		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(userInfo,userInfo.getLoginPwd(),
-				ByteSource.Util.bytes(userInfo.getPwdSalt()),userInfo.getLoginName());
+		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(sysUser,sysUser.getLoginPwd(),
+				ByteSource.Util.bytes(sysUser.getPwdSalt()),sysUser.getLoginName());
 	    return authenticationInfo;
 	}
 

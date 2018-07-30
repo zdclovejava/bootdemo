@@ -2,6 +2,7 @@ package com.example.bootdemo.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 public class SysUser extends PageParam implements Serializable{
    
@@ -43,6 +44,7 @@ public class SysUser extends PageParam implements Serializable{
 
 	private Date updDate;
 
+	private List<SysMenu> menuSet;
 
 	
     public Integer getUserId() {
@@ -151,6 +153,16 @@ public class SysUser extends PageParam implements Serializable{
 
 	public void setPageSize(Integer pageSize) {
 		this.pageSize = pageSize;
+	}
+	
+	
+
+	public List<SysMenu> getMenuSet() {
+		return menuSet;
+	}
+
+	public void setMenuSet(List<SysMenu> menuSet) {
+		this.menuSet = menuSet;
 	}
 
 	@Override

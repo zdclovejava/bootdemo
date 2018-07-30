@@ -1,8 +1,8 @@
 package com.example.bootdemo.dao;
 
-import com.example.bootdemo.model.SysMenu;
-
 import java.util.List;
+
+import com.example.bootdemo.model.SysMenu;
 
 public interface SysMenuMapper {
 
