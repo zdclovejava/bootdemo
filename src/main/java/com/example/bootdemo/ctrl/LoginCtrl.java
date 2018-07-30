@@ -2,11 +2,17 @@ package com.example.bootdemo.ctrl;
 
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.example.bootdemo.model.SysUser;
 
 /**
  * 登录处理
@@ -34,7 +40,8 @@ public class LoginCtrl {
 	@RequestMapping({"/","/index"})
 	public ModelAndView index(){
 		ModelAndView view = new ModelAndView();
-		view.addObject("hello", "hello hhhhhh");
+		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getSession().getAttribute("sysUser");
+		view.addObject("user",sysUser);
 		view.setViewName("index");
 		return view;
 	}

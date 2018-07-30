@@ -44,8 +44,9 @@ public class SysUser extends PageParam implements Serializable{
 
 	private Date updDate;
 
-	private List<SysMenu> menuSet;
+	private List<SysMenu> menuList;
 
+	
 	
     public Integer getUserId() {
 		return userId;
@@ -155,14 +156,13 @@ public class SysUser extends PageParam implements Serializable{
 		this.pageSize = pageSize;
 	}
 	
-	
 
-	public List<SysMenu> getMenuSet() {
-		return menuSet;
+	public List<SysMenu> getMenuList() {
+		return menuList;
 	}
 
-	public void setMenuSet(List<SysMenu> menuSet) {
-		this.menuSet = menuSet;
+	public void setMenuList(List<SysMenu> menuList) {
+		this.menuList = menuList;
 	}
 
 	@Override
