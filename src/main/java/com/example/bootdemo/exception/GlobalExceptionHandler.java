@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
 	String handleException(Exception e){
-		LOGGER.info("haha，快看：{}", e.getMessage());
+		LOGGER.error("----------出错了，系统错误：{}", e.getMessage());
 		return e.getMessage();
 	}
 	
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(BusinessException.class)
 	@ResponseBody
 	String handleBusinessException(BusinessException e){
-		LOGGER.error("haha，快看：{}", e.getMessage());
+		LOGGER.error("----------出错了，业务异常：{}", e.getMessage());
 		return e.getMessage();
 	}
 	

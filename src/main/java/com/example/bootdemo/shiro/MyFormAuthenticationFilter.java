@@ -5,15 +5,26 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.authc.FormAuthenticationFilter;
 import org.apache.shiro.web.util.WebUtils;
 
 import com.example.bootdemo.model.SysUser;
+import com.google.code.kaptcha.Constants;
 
 
 public class MyFormAuthenticationFilter extends FormAuthenticationFilter {
+	
+	private String captchaParam = "captchaCode"; //前台提交的验证码参数名  
+
+    private String failureKeyAttribute = "shiroLoginFailure";  //验证失败后存储到的属性名  
+
+    public String getCaptchaCode(ServletRequest request) {
+        return WebUtils.getCleanParam(request, getCaptchaParam());
+    }
 
     /**
      * 每次登录都会到这里来，这里用来处理 不注销之前已登录用户下，再次登录
@@ -27,7 +38,6 @@ public class MyFormAuthenticationFilter extends FormAuthenticationFilter {
             {
                 //本次用户登陆账号
                 String account = this.getUsername(request);
-
                 Subject subject = this.getSubject(request, response);
                 //之前登陆的用户
                 SysUser user = (SysUser) subject.getPrincipal();
@@ -35,14 +45,14 @@ public class MyFormAuthenticationFilter extends FormAuthenticationFilter {
                 if (account != null && user != null)
                 {
                     //获取session，获取验证码
-                    //HttpServletRequest httpServletRequest=(HttpServletRequest) request;
-                    //HttpSession session= httpServletRequest.getSession();
-                    //String sRand = (String) session.getAttribute("sRand");
+                    HttpServletRequest httpServletRequest=(HttpServletRequest) request;
+                    HttpSession session= httpServletRequest.getSession();
+                    String captchaCode = (String) session.getAttribute(Constants.KAPTCHA_SESSION_KEY);
                     //注销登录，同时会使session失效
                     subject.logout();
-                    //所以重新设置session
-                    //HttpSession session1= httpServletRequest.getSession();
-                    //session1.setAttribute("sRand", sRand);
+                    //所以重新设置session，需要将验证码重新存入该session中
+                    HttpSession session1= httpServletRequest.getSession();
+                    session1.setAttribute(Constants.KAPTCHA_SESSION_KEY, captchaCode);
                 }
             }
         }
@@ -66,18 +76,29 @@ public class MyFormAuthenticationFilter extends FormAuthenticationFilter {
      */
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-        HttpServletRequest httpServletRequest=(HttpServletRequest) request;
-        //从session获取验证码，正确的验证码
-        HttpSession session=httpServletRequest.getSession();
-        String validate =(String) session.getAttribute("sRand");
-        //获取输入的验证码
-        String myValidate = httpServletRequest.getParameter("imageCode");
-        //验证失败，设置错误信息
-        if (validate!=null&& myValidate!=null&&!validate.equals(myValidate)) {
-            httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeError");
-            //拒绝访问
+        // 从session获取正确的验证码
+        Session session = SecurityUtils.getSubject().getSession();
+        //页面输入的验证码
+        String captchaCode = getCaptchaCode(request);
+        String validateCode = (String)session.getAttribute(Constants.KAPTCHA_SESSION_KEY);
+        // 若验证码为空，返回true表示不通过
+        if(captchaCode == null || validateCode==null) {
+            return true;
+        }
+        //验证码校验，忽略大小写
+        if(!captchaCode.toLowerCase().equals(validateCode.toLowerCase())) {
+        	request.setAttribute(failureKeyAttribute, "kaptchaValidateFailed");  
             return true;
         }
         return super.onAccessDenied(request, response);
     }
+    
+    public String getCaptchaParam() {
+        return captchaParam;
+    }
+
+    public void setCaptchaParam(String captchaParam) {
+        this.captchaParam = captchaParam;
+    }
+
 }

@@ -1,17 +1,23 @@
 package com.example.bootdemo.ctrl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.session.Session;
-import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.alibaba.fastjson.JSONObject;
+import com.example.bootdemo.exception.BusinessException;
+import com.example.bootdemo.model.SysMenu;
 import com.example.bootdemo.model.SysUser;
 
 /**
@@ -47,6 +53,15 @@ public class LoginCtrl {
 	}
 	
 	/**
+	 * 主页
+	 * @return
+	 */
+	@RequestMapping({"/main"})
+	public String main(){
+		return "main";
+	}
+	
+	/**
 	 * 登录处理
 	 * @param request
 	 * @param map
@@ -60,19 +75,42 @@ public class LoginCtrl {
 		if(exception!=null){
 			if(UnknownAccountException.class.getName().equals(exception)){
 				//账号不存在
-				msg="账号不存在";
+				msg="账号或密码输入错误！";
 			}else if(IncorrectCredentialsException.class.getName().equals(exception)){
 				//密码不正确
-				msg = "密码不正确";
+				msg = "账号或密码输入错误！";
 			}else if("kaptchaValidateFailed".equals(exception)){
 				//验证码错误
-				msg="验证码错误";
+				msg="验证码输入错误！";
 			}else{
 				msg = exception;
 			}
 		}
 		map.put("msg", msg);
 		return "login";
+	}
+	
+	/**
+	 * 获取用户菜单
+	 * @param pmenuId
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(path="/umenu")
+	public String getCurrUserMenu(@RequestParam(name = "pmenuId", required = true) Integer pmenuId,
+			HttpServletRequest request){
+		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getSession().getAttribute("sysUser");
+		if(sysUser!=null && sysUser.getMenuList()!=null){
+			List<SysMenu> cmenuList = new ArrayList<SysMenu>(); 
+			for(SysMenu sysMenu : sysUser.getMenuList()){
+				if(sysMenu.getParentId() == pmenuId){
+					cmenuList.add(sysMenu);
+				}
+			}
+			return JSONObject.toJSONString(cmenuList);
+		}
+		throw new BusinessException("用户登录信息异常！");
 	}
 	
 }
